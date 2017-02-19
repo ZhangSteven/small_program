@@ -21,7 +21,7 @@ class InvalidLineInfo(Exception):
 
 
 
-def refine_price(record_list, ft_transfer_file):
+def refine_price(record_list, ft_records):
 	"""
 	Refine the price for all transfer records. Here we expect the CSA,
 	IATSA prices are the same as in the transaction file, but CSW and
@@ -32,15 +32,17 @@ def refine_price(record_list, ft_transfer_file):
 	of records (CALL, TNDL) are ignored.
 	"""
 	for (transfer, ft_transfer) in match(filter_transfer(record_list), 
-											read_file(ft_transfer_file, read_line_ft, validate_line), 
-											map_transfer):
-		transfer['Price'] = ft_transfer['Price']
+											ft_records, map_transfer):
+		if ft_transfer['TRADEPRC'] > 0:			
+			transfer['Price'] = ft_transfer['TRADEPRC']
+		else:
+			transfer['Price'] = (abs(ft_transfer['CPTLAWLCL']) - abs(ft_transfer['ACCRBAS']*ft_transfer['FXRATE']))/ft_transfer['QTY']*100
 
 	return record_list
 
 
 
-def read_line_ft(ws, row):
+def read_line_ft(ws, row, fields):
 	"""
 	Read a line in the FT transfer records file, return a transfer record.
 	"""
@@ -67,11 +69,13 @@ def read_line_ft(ws, row):
 
 
 def validate_line(line_info):
-	if line_info['TRADEPRC'] > 0:
-		if abs(line_info['CPTLAWLCL']/line_info['QTY']*100.0 - line_info['TRADEPRC']) > 0.000001:
-			print('bond {0} has inconsistent price, on {1}'.
-					format(line_info['SCTYID_ISIN'], line_info['TRDDATE']))
-			raise InvalidLineInfo
+	# if line_info['TRADEPRC'] > 0:
+	# 	print(abs(line_info['CPTLAWLCL']/line_info['QTY']*100.0))
+	# 	if abs(line_info['CPTLAWLCL']/line_info['QTY']*100.0 - line_info['TRADEPRC']) > 0.01:
+	# 		print('bond {0} has inconsistent price, on {1}'.
+	# 				format(line_info['SCTYID_ISIN'], line_info['TRDDATE']))
+	# 		raise InvalidLineInfo
+	pass
 
 
 
@@ -91,26 +95,15 @@ def filter_transfer(record_list):
 
 
 
-def map_csw_csa(transfer_out, transfer_in):
+def map_transfer(record, ft_record):
 	"""
-	Map a CSW record to a CSA record.
+	Map a transfer record to a FT transfer record.
 	"""
-	if transfer_out['EventDate'] == transfer_in['EventDate'] \
-		and transfer_out['Investment'] == transfer_in['Investment']:
-		return True
-
-	return False
-
-
-
-def map_iatsw_iatsa(transfer_out, transfer_in):
-	"""
-	Map an IATSW record to an IATSA record.
-	"""
-	if transfer_out['EventDate'] == transfer_in['EventDate'] \
-		and transfer_out['Investment'] == transfer_in['Investment'] \
-		and transfer_out['Quantity'] == transfer_in['Quantity'] \
-		and transfer_out['Portfolio'] != transfer_in['Portfolio']:
+	if ft_record['TRANCOD'] in record['KeyValue'] \
+		and record['Portfolio'] == ft_record['ACCT_ACNO'] \
+		and record['Investment'].split()[0] == ft_record['SCTYID_ISIN'] \
+		and record['EventDate'] == ft_record['TRDDATE'] \
+		and record['Quantity'] == ft_record['QTY']:
 		return True
 
 	return False
@@ -122,6 +115,7 @@ if __name__ == '__main__':
 	import argparse
 	parser = argparse.ArgumentParser(description='Match the transfer records to FT transactions file and correct some of their prices.')
 	parser.add_argument('record_file')
+	parser.add_argument('ft_transfer_file')
 	args = parser.parse_args()
 
 	import os, sys
@@ -130,9 +124,15 @@ if __name__ == '__main__':
 		sys.exit(1)
 
 	records, row_in_error = read_file(args.record_file, read_line)
-	# write_csv('iatsw.csv', get_record_fields(), refine_price(records))
-	# if len(row_in_error) > 0:
-	# 	print('some rows in error.')
+	if len(row_in_error) > 0:
+		print('some rows in error for record file.')
+
+	ft_records, row_in_error = read_file(args.ft_transfer_file, read_line_ft, validate_line)
+	print(len(ft_records))
+	if len(row_in_error) > 0:
+		print('some rows in error for ft record file.')
+
+	write_csv('refined_records.csv', get_record_fields(), refine_price(records, ft_records))
 
 
 
