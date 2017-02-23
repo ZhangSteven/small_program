@@ -24,15 +24,10 @@ def create_tax_lot_date(trustee_records, trade_records):
 	for (trustee_record, trade_record) in matched:
 		trustee_record['date'] = convert_datetime_to_string(trade_record['SettleDate'])
 
-	unmatched_isin = []
 	for trustee_record in unmatched:
 		trustee_record['date'] = ''
 
-		isin = trustee_record['Description'].split()[0]
-		if not isin in unmatched_isin: 
-			unmatched_isin.append(isin)
-
-	return trustee_records, unmatched_isin
+	return trustee_records, unmatched
 
 
 
@@ -104,6 +99,14 @@ def map_trade_tax_lot(trustee_record, trade_record):
 
 
 
+def update_isin_list(unmatched_isin, unmatched_records):
+	for record in unmatched_records:
+		isin = record['Description'].split()[0]
+		if not isin in unmatched_isin:
+			unmatched_isin.append(isin)
+			
+
+
 def get_record_fields():
 	return ['Description', 'Currency', 'Par Amount', 'Coupon', 
 			'Interest Start Day', 'Maturity', 'date', 'Average Cost', 
@@ -127,14 +130,15 @@ if __name__ == '__main__':
 		print('Some rows in error when reading trade record file.')
 
 	portfolios = ['12229', '12366', '12528', '12548', '12630', '12732', '12733', '12734']
-	total_unmatched_isin = []
+	unmatched_isin = []
 	for p in portfolios:
 		trustee_records, row_in_error = read_file('trustee\\{0}.xlsx'.format(p), read_line_trustee)
 		if len(row_in_error) > 0:
 			print('Some rows in error when reading trustee record {0}'.format(p))
 
-		trustee_records, unmatched_isin = create_tax_lot_date(trustee_records, trade_records)
+		trustee_records, unmatched = create_tax_lot_date(trustee_records, trade_records)
 		write_csv('{0}_refined.csv'.format(p), get_record_fields(), trustee_records)
-		
-		# end of for loop
+		update_isin_list(unmatched_isin, unmatched)
+	# end of for loop
 
+	write_csv('unmatched_isin.csv', ['isin'], [{'isin':x} for x in unmatched_isin])

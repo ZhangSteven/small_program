@@ -65,18 +65,17 @@ class TestTrustee(unittest2.TestCase):
 
     def test_create_tax_lot_date(self):
         trustee_records, trade_records = self.read_both_files()
-        new_trustee_records, unmatched_isin = create_tax_lot_date(trustee_records, trade_records)
+        new_trustee_records, unmatched = create_tax_lot_date(trustee_records, trade_records)
         self.assertEqual(len(new_trustee_records), 7)
-        self.assertEqual(len(unmatched_isin), 5)
+        self.assertEqual(len(unmatched), 5)
         self.assertEqual(new_trustee_records[0]['date'], '')
         self.assertEqual(new_trustee_records[1]['date'], '2009-6-2')
         self.assertEqual(new_trustee_records[2]['date'], '')
         self.assertEqual(new_trustee_records[5]['date'], '2016-12-14')
         self.assertEqual(new_trustee_records[6]['date'], '')
-        self.assertEqual(unmatched_isin[0], 'HK0000097490')
-        self.assertEqual(unmatched_isin[1], 'HK0000134780')
-        self.assertEqual(unmatched_isin[4], 'XS1529948934')
-        self.assertFalse('XS1523197892' in unmatched_isin)
+        self.assertEqual(unmatched[0]['Description'].split()[0], 'HK0000097490')
+        self.assertEqual(unmatched[1]['Description'].split()[0], 'HK0000134780')
+        self.assertEqual(unmatched[4]['Description'].split()[0], 'XS1529948934')
 
 
 
