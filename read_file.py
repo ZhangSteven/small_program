@@ -48,7 +48,7 @@ def read_file(filename, read_line_function, validate_function=None, starting_row
 
 			output.append(line_info)
 		except:
-			row_in_error.append(line_info)
+			row_in_error.append(row)
 
 		row = row + 1
 	# end of while loop
