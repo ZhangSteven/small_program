@@ -31,22 +31,24 @@ def read_file(filename, read_line_function, validate_function=None, starting_row
 		if is_blank_line(ws, row):
 			break
 
-		line_info = read_line_function(ws, row, fields)
-		if not validate_function is None:
-			try:
-				validate_function(line_info)
-				output.append(line_info)
-			except:
-				row_in_error.append(row)
-		else:
-			output.append(line_info)
-
-		# try:
-		# 	output.append(line_info)
-		# 	if not validate_function is None:
+		# line_info = read_line_function(ws, row, fields)
+		# if not validate_function is None:
+		# 	try:
 		# 		validate_function(line_info)
-		# except:
-		# 	row_in_error.append(row)
+		# 		output.append(line_info)
+		# 	except:
+		# 		row_in_error.append(line_info)
+		# else:
+		# 	output.append(line_info)
+
+		try:
+			line_info = read_line_function(ws, row, fields)
+			if not validate_function is None:
+				validate_function(line_info)
+
+			output.append(line_info)
+		except:
+			row_in_error.append(line_info)
 
 		row = row + 1
 	# end of while loop
