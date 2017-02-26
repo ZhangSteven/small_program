@@ -7,24 +7,24 @@ from xlrd import open_workbook
 
 
 
-def read_file(filename, read_line_function, validate_function=None):
+def read_file(filename, read_line_function, validate_function=None, starting_row=0):
 	"""
 	A generic function to read an excel file and create a list of records.
 
 	Assumptions:
 
 	1. The file has only one sheet.
-	2. The file format: the first line contain the column names (data fields),
-		second line onwards are the data.
+	2. The file format: the 'starting_row' line contain the column names 
+		(data fields), second line onwards are the data.
 	3. When a blank line (5 consecutive blank cells) appears, the reading
 		stops.
 	"""
 	wb = open_workbook(filename=filename)
 	ws = wb.sheet_by_index(0)
 
-	fields = read_data_fields(ws, 0)
+	fields = read_data_fields(ws, starting_row)
 	
-	row = 1
+	row = starting_row + 1
 	output = []
 	row_in_error = []
 	while row < ws.nrows:
@@ -32,12 +32,21 @@ def read_file(filename, read_line_function, validate_function=None):
 			break
 
 		line_info = read_line_function(ws, row, fields)
-		try:
-			output.append(line_info)
-			if not validate_function is None:
+		if not validate_function is None:
+			try:
 				validate_function(line_info)
-		except:
-			row_in_error.append(row)
+				output.append(line_info)
+			except:
+				row_in_error.append(row)
+		else:
+			output.append(line_info)
+
+		# try:
+		# 	output.append(line_info)
+		# 	if not validate_function is None:
+		# 		validate_function(line_info)
+		# except:
+		# 	row_in_error.append(row)
 
 		row = row + 1
 	# end of while loop
