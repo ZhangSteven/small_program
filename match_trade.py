@@ -1,7 +1,8 @@
 # coding=utf-8
 #
-# Match the transfer record to the overall transfer transaction file
-# from FT, correct their prices if necessary.
+# Match the previous CSA/CSW/IATSA/IATSW upload records to Geneva to 
+# the overall transfer transaction file from FT, correct their prices 
+# if necessary.
 #
 
 from xlrd import open_workbook
@@ -13,11 +14,6 @@ from small_program.match_transfer import read_line, get_record_fields, \
 		write_csv
 from small_program.read_file import read_file
 import csv
-
-
-
-class InvalidLineInfo(Exception):
-	pass
 
 
 
@@ -68,17 +64,6 @@ def read_line_ft(ws, row, fields):
 
 
 
-def validate_line(line_info):
-	# if line_info['TRADEPRC'] > 0:
-	# 	print(abs(line_info['CPTLAWLCL']/line_info['QTY']*100.0))
-	# 	if abs(line_info['CPTLAWLCL']/line_info['QTY']*100.0 - line_info['TRADEPRC']) > 0.01:
-	# 		print('bond {0} has inconsistent price, on {1}'.
-	# 				format(line_info['SCTYID_ISIN'], line_info['TRDDATE']))
-	# 		raise InvalidLineInfo
-	pass
-
-
-
 def filter_transfer(record_list):
 	"""
 	Filter out bond transfer records from the record list. Bond call and 
@@ -125,12 +110,11 @@ if __name__ == '__main__':
 
 	records, row_in_error = read_file(args.record_file, read_line)
 	if len(row_in_error) > 0:
-		print('some rows in error for record file.')
+		print('some rows in error reading original CSA/CSW/IATSA/IATSW record file.')
 
-	ft_records, row_in_error = read_file(args.ft_transfer_file, read_line_ft, validate_line)
-	print(len(ft_records))
+	ft_records, row_in_error = read_file(args.ft_transfer_file, read_line_ft)
 	if len(row_in_error) > 0:
-		print('some rows in error for ft record file.')
+		print('some rows in error for ft transfer file.')
 
 	write_csv('refined_records.csv', get_record_fields(), refine_price(records, ft_records))
 
