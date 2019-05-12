@@ -54,8 +54,16 @@ if __name__ == '__main__':
         print(x)
 
 
+
     """
-    What if we want multiple functions to called for the same set of arguments?
+    What if we want multiple functions called for the same set of arguments?
+
+    We'll see:
+
+    [
+      ['hello steven zz', 'hello isaac zhang']
+    , ['bye steven zz', 'bye isaac zhang']
+    ]
     """
     doAllFunctions = lambda fns, *args: [list(map(fn, *args)) for fn in fns]
     hello = lambda first, last: 'hello ' + catString(first, last)
@@ -63,13 +71,27 @@ if __name__ == '__main__':
     for x in doAllFunctions([hello, bye], ['steven', 'isaac'], ['zz', 'zhang']):
         print(x)
 
+    
+    """
+    This approach, however, can lead to unexpected result if one of the arguments 
+    is an iterable that can only iterate once. For example, an map object. See
+    below example, the result is:
+
+    [
+      [1, 4, 7, 10, 13]
+    , [0, 13]
+    ]
+    """
+    for x in doAllFunctions([add, mul], range(5), map(lambda x: 2*x+1, range(0,7))):
+        print(x)
+
 
     """
     We can use the 'juxt' function from the third party library to achieve a
-    similar result: calling multiple functions on the same set of arguments.
+    more consistent result, without worrying whether the arguments can be
+    iterated once or not.
 
-    Except that the list of results is a list of tuples. For example, the
-    result for the below will look like:
+    The result is a list of tuples, as below:
 
     (1, 0)
     (4, 3)
@@ -77,7 +99,7 @@ if __name__ == '__main__':
     (10, 21)
     (13, 36)
     """
-    for x in map(juxt([add, mul]), range(5), map(lambda x: 2*x+1, range(0,20))):
+    for x in map(juxt([add, mul]), range(5), map(lambda x: 2*x+1, range(0,7))):
         print(x)
 
 
@@ -92,8 +114,11 @@ if __name__ == '__main__':
 
     into the new list:
 
-    [(1, 4, 7, 10, 13), (0, 3, 10, 21, 36)]
+    [
+      (1, 4, 7, 10, 13)
+    , (0, 3, 10, 21, 36)
+    ]
     """
-    out = zip(*map(juxt([add, mul]), range(5), map(lambda x: 2*x+1, range(0,20))))
+    out = zip(*map(juxt([add, mul]), range(5), map(lambda x: 2*x+1, range(0,7))))
     for x in out:
         print(x)
