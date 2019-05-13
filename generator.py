@@ -5,7 +5,7 @@
 # About generator function
 
 from itertools import takewhile
-from itertools import islice, tee, accumulate
+from itertools import islice, tee, accumulate, chain
 from operator import mul
 
 
@@ -24,11 +24,11 @@ def get_primes():
 
 
 
-def fabonacci():
-    a, b = 0, 1
-    while True:
-        yield a 
-        a, b = b, a+b 
+def from_logs(fnames):
+    """
+    map file names to iterables (over file lines)
+    """
+    yield from (open(fname) for fname in fnames)
 
 
 
@@ -80,3 +80,12 @@ if __name__ == '__main__':
     pairs = zip(t, accumulate(s, mul))
     for (prime, total) in takewhile(lambda x: x[1] < 1000, pairs):
         print(prime, total)
+
+
+
+    """
+    Chain an iterable of iterables: aggregate lines from multiple files.
+    """
+    for line in chain.from_iterable(from_logs(['samples/testFile1.txt'
+                                              , 'samples/testFile2.txt'])):
+        print(line)
